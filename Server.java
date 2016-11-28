@@ -18,6 +18,10 @@ public class Server {
         }
     }
 
+    public static class Game {
+    
+    }
+    
     private static class SocketProcessor implements Runnable {
 
         private Socket s;
@@ -32,14 +36,15 @@ public class Server {
 
         public void run() {
             try {
-                readInputHeaders();
                 String content = new Scanner(new File("index.html")).useDelimiter("\\Z").next();
-                writeResponse(content);
+                sendHTML(content);
+                //main game here
+                
             } catch (Throwable t) {
                 /*do nothing*/
             } finally {
                 try {
-                    s.close();
+                   /*do nothing*/ 
                 } catch (Throwable t) {
                     /*do nothing*/
                 }
@@ -47,25 +52,14 @@ public class Server {
             System.err.println("Client processing finished");
         }
 
-        private void writeResponse(String s) throws Throwable {
+        private void sendHTML(String s) throws Throwable {
             String response = "HTTP/1.1 200 OK\r\n" +
-                    "Server: YarServer/2009-09-09\r\n" +
                     "Content-Type: text/html\r\n" +
                     "Content-Length: " + s.length() + "\r\n" +
-                    "Connection: close\r\n\r\n";
+                    "Connection: keep-alive\r\n\r\n";
             String result = response + s;
             os.write(result.getBytes());
             os.flush();
-        }
-
-        private void readInputHeaders() throws Throwable {
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            while(true) {
-                String s = br.readLine();
-                if(s == null || s.trim().length() == 0) {
-                    break;
-                }
-            }
         }
     }
 }
