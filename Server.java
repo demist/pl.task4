@@ -15,7 +15,33 @@ public class Server
 	//server starts here
 	public static void main(String args[])
 	{
+		//starting game here
 
+		//starting websocket server here
+
+		//accepting new clients and send them base html page
+		int portNumber = 7777;
+		try
+		{
+			serverSocket = new ServerSocket(portNumber);
+		}
+		catch (IOException e)
+		{
+			System.out.println(e);
+		}
+		while (true)
+		{
+			try
+			{
+				clientSocket = serverSocket.accept();
+				ClientThread thr = new ClientThread(clientSocket);
+				thr.start();
+			}
+			catch (IOException e)
+			{
+				System.out.println(e);
+			}
+		}
 	}
 
 	//simple class used to send base html page to clients
@@ -30,7 +56,25 @@ public class Server
 
 		public void run()
 		{
-
+			try
+			{
+				DataInputStream is = new DataInputStream(clientSocket.getInputStream());
+				PrintStream os = new PrintStream(clientSocket.getOutputStream());
+				//sending base html page
+        		String content = new Scanner(new File("index.html")).useDelimiter("\\Z").next();
+        		String header = "HTTP/1.1 200 OK\r\n" +
+                        "Content-Type: text/html\r\n" +
+                        "Content-Length: " + content.length() + "\r\n" +
+                        "Connection: close\r\n\r\n";
+        		String response = header + content;
+        		os.write(response.getBytes());
+        		os.flush();
+        		//field update will be on its turn
+			}
+			catch (IOException e)
+			{
+				System.out.println(e);
+			}
 		}
 	}
 
