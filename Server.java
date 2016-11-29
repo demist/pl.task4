@@ -15,8 +15,10 @@ public class Server {
   public static void main(String args[])
   {
     //game thread
-    gameThread masterThread = new gameThread();
-    masterThread.start();
+    Game gameThread = new Game();
+    gameThread.start();
+    //thread for accepting WebSocket connection after page loading
+    
     //accepting new clients and send them base html page
     int portNumber = 7777;
     try
@@ -42,14 +44,12 @@ public class Server {
     }
   }
   
-  private static class gameThread extends Thread
+  private static class Game extends Thread
   {
     private ArrayList<Boolean> inGame;
     private ArrayList<ArrayList<Integer>> game;
     
-    public gameThread()
-    {
-    }
+    public Game(){}
   
     private void newGame()
     {
@@ -123,20 +123,20 @@ public class Server {
       return false;
     }
   
-    private void nextTurn(int id)
+    private void nextTurn(int id, int i, int j)
     {
-      if (inGame.get(id) == false)
-	updateGame(id);
+      ArrayList<Integer> tmp = game.get(i);
+      tmp.set(j, id);
     }
   
     private void updateGame(int id)
     { 
       inGame.set(id, true);
     }
-  
+    
     public void run()
     {
-    
+      
     }
   }
 
@@ -174,6 +174,5 @@ public class Server {
       }
     }
   }
-
 }
 
