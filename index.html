@@ -1,0 +1,52 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Tic-Tac-Toe</title>
+  <meta name="tic-tac-toe" content="own tic-tac-toe impl">
+  <meta name="Niktia Starichkov" content="Game">
+</head>
+<body style=" background: lightblue;">
+        <canvas id="canvas" width="820px" height="820px" style="background: #fff; magrin:20px;"></canvas>
+<script type="text/javascript" language="javascript">
+  var canvas = document.getElementById("canvas"),
+    c = canvas.getContext("2d");
+  canvas.addEventListener('click', handleClick);
+
+  function drawBox() {
+    c.beginPath();
+    c.fillStyle = "white";
+    c.lineWidth = 2;
+    c.strokeStyle = 'black';
+    for (var row = 0; row < 20; row++) {
+        for (var column = 0; column < 20; column++) {
+            var x = 10 + column * 40;
+            var y = 10 + row * 40;
+            c.rect(x, y, 40, 40);
+            c.fill();
+            c.stroke();
+        }
+    }
+    c.closePath();
+  }
+
+  function handleClick(e) {
+    c.fillStyle = "blue";
+
+    c.fillRect(Math.floor((e.offsetX - 10)/40)*40 + 10,
+               Math.floor((e.offsetY - 10)/40)*40 + 10,
+               40, 40);
+  }
+
+drawBox();
+ws = new WebSocket("ws://localhost:7778");
+ws.onopen = function() { alert("Connection opened...") };
+ws.onclose = function() { alert("Connection closed...") };
+ws.onmessage = function(evt) { $("#msg").append("<p>"+evt.data+"</p>"); };
+
+
+</script>
+</body>
+</html>
