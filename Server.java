@@ -6,19 +6,24 @@ import java.net.ServerSocket;
 import java.util.Scanner;
 import java.io.File;
 import java.util.ArrayList;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public class Server
 {
 	private static ServerSocket serverSocket = null;
 	private static Socket clientSocket = null;
+	private static ArrayList<Player> players;
 
 	//server starts here
 	public static void main(String args[])
 	{
+		players = new ArrayList<Player>();
 		//starting game here
 
 		//starting websocket server here
-
+		WebSocketServer wss = new WebSocketServer(players);
+		wss.start();
 		//accepting new clients and send them base html page
 		int portNumber = 7777;
 		try
@@ -95,25 +100,71 @@ public class Server
 	//class used to register new WebSocket clients
 	private static class WebSocketServer extends Thread
 	{
-		public WebSocketServer()
-		{
+		private static ArrayList<Player> players;
+		private static ServerSocket wsServerSocket;
 
+		public WebSocketServer(ArrayList<Player> players)
+		{
+			this.players = players;
 		}
 
 		public void run()
 		{
+			int wsPortNumber = 7778;
+			try
+			{
+				wsServerSocket = new ServerSocket(wsPortNumber);
+			}
+			catch (IOException e)
+			{
+				System.out.println(e);
+			}
+			while (true)
+			{
+				try
+				{
+					Socket wsClientSocket = wsServerSocket.accept();
+					WebSocketThread wst = new WebSocketThread(wsClientSocket);
+					wst.start();
+				}
+				catch (IOException e)
+				{
+					System.out.println(e);
+				}
+			}
+		}
+	}
 
+	//simple class used to establish WebSocketConnection
+	private static class WebSocketThread extends Thread
+	{
+		private Socket wsClientSocket = null;
+		
+		public WebSocketThread(Socket clientSocket)
+		{
+			this.wsClientSocket = clientSocket;
+		}
+
+		public void run()
+		{
+			try
+			{
+				System.out.println("WebSocketThread\n");
+				BufferedReader in = new BufferedReader(new InputStreamReader(wsClientSocket.getInputStream()));
+				String inputLine;
+				while (!(inputLine = in.readLine()).equals(""))
+    				System.out.println(inputLine);
+					in.close();
+			}
+			catch (IOException e)
+			{
+				System.out.println(e);
+			}
 		}
 	}
 
 	//player class used to represent and interact with clients
 	private static class Player
-	{
-
-	}
-
-	//base class which implements WebSocket Protocol
-	private static class WebSocket
 	{
 
 	}

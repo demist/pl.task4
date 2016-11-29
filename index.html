@@ -41,10 +41,10 @@
   }
 
 drawBox();
-//ws = new WebSocket("ws://localhost:7778");
-//ws.onopen = function() { alert("Connection opened...") };
-//ws.onclose = function() { alert("Connection closed...") };
-//ws.onmessage = function(evt) { $("#msg").append("<p>"+evt.data+"</p>"); };
+ws = new WebSocket("ws://localhost:7778");
+ws.onopen = function() { alert("Connection opened...") };
+ws.onclose = function() { alert("Connection closed...") };
+ws.onmessage = function(evt) { $("#msg").append("<p>"+evt.data+"</p>"); };
 
 </script>
 </body>
