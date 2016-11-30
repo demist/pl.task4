@@ -22,7 +22,7 @@ public class Server
 	  byte[] result = mDigest.digest(input.getBytes());
 	  return result;
 	}
-}
+    }
 
 	private static ServerSocket serverSocket = null;
 	private static Socket clientSocket = null;
@@ -137,7 +137,7 @@ public class Server
 				try
 				{
 					Socket wsClientSocket = wsServerSocket.accept();
-					WebSocketThread wst = new WebSocketThread(wsClientSocket);
+					WebSocketThread wst = new WebSocketThread(wsClientSocket, players);
 					wst.start();
 				}
 				catch (IOException e)
@@ -152,10 +152,12 @@ public class Server
 	private static class WebSocketThread extends Thread
 	{
 		private Socket wsClientSocket = null;
+		ArrayList<Player> players;
 		
-		public WebSocketThread(Socket clientSocket)
+		public WebSocketThread(Socket clientSocket, ArrayList<Player> players)
 		{
 			this.wsClientSocket = clientSocket;
+			this.players = players;
 		}
 
 		public void run()
@@ -184,6 +186,9 @@ public class Server
 					"Sec-WebSocket-Accept: " + result + "\r\n\r\n";
 				  os.write(response.getBytes());
 				  os.flush();
+				  Player newOne = new Player(wsClientSocket);
+				  //synchronize here
+				  players.add(newOne);
 				}
 				catch (Exception e)
 				{
@@ -196,10 +201,36 @@ public class Server
 			}
 		}
 	}
-
+	//util class
+	public static class Point
+	{
+	  public int x;
+	  public int y;
+	  public Point(int x, int y)
+	  {
+	    this.x = x;
+	    this.y = y;
+	  }
+	}
 	//player class used to represent and interact with clients
 	private static class Player
 	{
-
+	    private Socket wsSocket = null;
+	    public Player(Socket wsSocket)
+	    {
+	      this.wsSocket = wsSocket;
+	    }
+	    public void sendTurn(int id, Point p)
+	    {
+	      
+	    }
+	    public void sendCleanField()
+	    {
+	    
+	    }
+	    public Point getTurn(int id)
+	    {
+	    
+	    }	    
 	}
 }
