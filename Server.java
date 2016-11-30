@@ -8,9 +8,22 @@ import java.io.File;
 import java.util.ArrayList;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 public class Server
 {
+    public static class Encoders 
+    {
+	static byte[] sha1(String input) throws NoSuchAlgorithmException
+	{
+	  MessageDigest mDigest = MessageDigest.getInstance("SHA1");
+	  byte[] result = mDigest.digest(input.getBytes());
+	  return result;
+	}
+}
+
 	private static ServerSocket serverSocket = null;
 	private static Socket clientSocket = null;
 	private static ArrayList<Player> players;
@@ -63,9 +76,9 @@ public class Server
 		{
 			try
 			{
-				DataInputStream is = new DataInputStream(clientSocket.getInputStream());
-				PrintStream os = new PrintStream(clientSocket.getOutputStream());
-				//sending base html page
+			DataInputStream is = new DataInputStream(clientSocket.getInputStream());
+			PrintStream os = new PrintStream(clientSocket.getOutputStream());
+			//sending base html page
         		String content = new Scanner(new File("index.html")).useDelimiter("\\Z").next();
         		String header = "HTTP/1.1 200 OK\r\n" +
                         "Content-Type: text/html\r\n" +
@@ -151,14 +164,31 @@ public class Server
 			{
 				BufferedReader in = new BufferedReader(new InputStreamReader(wsClientSocket.getInputStream()));
 				String inputLine;
-				String key;
+				String rawkey = "";
 				while (!(inputLine = in.readLine()).equals(""))
 				{
 				      String[] parts = inputLine.split(":");
 				      if (parts[0].equals("Sec-WebSocket-Key"))
-					  System.out.println(parts[1]);
-				}  
-				in.close();
+					  rawkey = parts[1];
+				}
+				try
+				{
+				  String key = rawkey.substring(1);
+				  String toHash = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+				  byte[] hashSHA1 = Encoders.sha1(toHash);
+				  String result = Base64.getEncoder().encodeToString(hashSHA1);
+				  PrintStream os = new PrintStream(wsClientSocket.getOutputStream());
+				  String response = "HTTP/1.1 101 Switching Protocols\r\n" +
+					"Upgrade: websocket\r\n" +
+					"Connection: Upgrade\r\n" + 
+					"Sec-WebSocket-Accept: " + result + "\r\n\r\n";
+				  os.write(response.getBytes());
+				  os.flush();
+				}
+				catch (Exception e)
+				{
+				  System.out.println(e);
+				}
 			}
 			catch (IOException e)
 			{
