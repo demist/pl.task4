@@ -230,7 +230,7 @@ public class Server
 	    }
 	    public Point getTurn(int id)
 	    {
-	    
+	      return new Point(0, 0);
 	    }	    
 	}
 }
