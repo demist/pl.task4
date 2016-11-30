@@ -149,12 +149,16 @@ public class Server
 		{
 			try
 			{
-				System.out.println("WebSocketThread\n");
 				BufferedReader in = new BufferedReader(new InputStreamReader(wsClientSocket.getInputStream()));
 				String inputLine;
+				String key;
 				while (!(inputLine = in.readLine()).equals(""))
-    				System.out.println(inputLine);
-					in.close();
+				{
+				      String[] parts = inputLine.split(":");
+				      if (parts[0].equals("Sec-WebSocket-Key"))
+					  System.out.println(parts[1]);
+				}  
+				in.close();
 			}
 			catch (IOException e)
 			{
