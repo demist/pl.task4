@@ -42,9 +42,18 @@
 
 drawBox();
 ws = new WebSocket("ws://localhost:7778");
-ws.onopen = function() { alert("Connection opened...") };
+ws.binaryType = 'arraybuffer';
+ws.onopen = function() {};
 ws.onclose = function() { alert("Connection closed...") };
-ws.onmessage = function(evt) { $("#msg").append("<p>"+evt.data+"</p>"); };
+ws.onmessage = function(evt)
+{
+  var dv = new DataView(evt.data);
+  var type = dv.getInt32(0);
+  var id = dv.getInt32(4);
+  var x = dv.getInt32(8);
+  var y = dv.getInt32(12);
+  alert(id);
+};
 
 </script>
 </body>

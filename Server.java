@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.nio.ByteBuffer;
 
 public class Server
 {
@@ -153,6 +154,8 @@ public class Server
 	{
 		private Socket wsClientSocket = null;
 		ArrayList<Player> players;
+		private BufferedReader in = null;
+		private PrintStream os = null;
 		
 		public WebSocketThread(Socket clientSocket, ArrayList<Player> players)
 		{
@@ -164,7 +167,7 @@ public class Server
 		{
 			try
 			{
-				BufferedReader in = new BufferedReader(new InputStreamReader(wsClientSocket.getInputStream()));
+				in = new BufferedReader(new InputStreamReader(wsClientSocket.getInputStream()));
 				String inputLine;
 				String rawkey = "";
 				while (!(inputLine = in.readLine()).equals(""))
@@ -179,19 +182,16 @@ public class Server
 				  String toHash = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 				  byte[] hashSHA1 = Encoders.sha1(toHash);
 				  String result = Base64.getEncoder().encodeToString(hashSHA1);
-				  PrintStream os = new PrintStream(wsClientSocket.getOutputStream());
+				  os = new PrintStream(wsClientSocket.getOutputStream());
 				  String response = "HTTP/1.1 101 Switching Protocols\r\n" +
 					"Upgrade: websocket\r\n" +
 					"Connection: Upgrade\r\n" + 
 					"Sec-WebSocket-Accept: " + result + "\r\n\r\n";
 				  os.write(response.getBytes());
 				  os.flush();
-				  Player newOne = new Player(wsClientSocket);
+				  Player newOne = new Player(wsClientSocket, in, os);
 				  //synchronize here
 				  players.add(newOne);
-				  byte[] msg = new byte[]{ (byte)0x81, (byte)0x05, (byte)0x48, (byte)0x65, (byte)0x6c, (byte)0x6c, (byte)0x6f};
-				  os.write(msg);
-				  os.flush();
 				}
 				catch (Exception e)
 				{
@@ -218,14 +218,40 @@ public class Server
 	//player class used to represent and interact with clients
 	private static class Player
 	{
+	    private BufferedReader in = null;
+	    private PrintStream os = null;
 	    private Socket wsSocket = null;
-	    public Player(Socket wsSocket)
+	    public Player(Socket wsSocket, BufferedReader in, PrintStream os)
 	    {
 	      this.wsSocket = wsSocket;
+	      this.in = in;
+	      this.os = os;
 	    }
 	    public void sendTurn(int id, Point p)
 	    {
-	      
+	      byte[] typeBytes = ByteBuffer.allocate(4).putInt(1).array();
+	      byte[] idBytes = ByteBuffer.allocate(4).putInt(id).array();
+	      byte[] xBytes = ByteBuffer.allocate(4).putInt(p.x).array();
+	      byte[] yBytes = ByteBuffer.allocate(4).putInt(p.y).array();
+	      byte[] msg = new byte[18];
+	      msg[0] = (byte) 0x82;
+	      msg[1] = (byte) 0x10;
+	      for (int i = 0; i < 4; i++)
+	      {
+		msg[2 + i] = typeBytes[i];
+		msg[6 + i] = idBytes[i];
+		msg[10 + i] = xBytes[i];
+		msg[14 + i] = yBytes[i];
+	      }
+	      try
+	      {
+		os.write(msg);
+		os.flush();
+	      }
+	      catch (IOException e)
+	      {
+		System.out.println(e);
+	      }
 	    }
 	    public void sendCleanField()
 	    {
