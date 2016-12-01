@@ -12,9 +12,14 @@
         <canvas id="canvas" width="820px" height="820px" style="background: #fff; magrin:20px;"></canvas>
 <script type="text/javascript" language="javascript">
   var canvas = document.getElementById("canvas"),
-    c = canvas.getContext("2d");
+  c = canvas.getContext("2d");
   canvas.addEventListener('click', handleClick);
-
+  
+  var playerX = 0; 
+  var playerY = 0;
+  var flag = false;
+  var myId = -1;
+  
   function drawBox() {
     c.beginPath();
     c.fillStyle = "white";
@@ -32,12 +37,76 @@
     c.closePath();
   }
 
-  function handleClick(e) {
-    c.fillStyle = "blue";
-
-    c.fillRect(Math.floor((e.offsetX - 10)/40)*40 + 10,
-               Math.floor((e.offsetY - 10)/40)*40 + 10,
-               40, 40);
+  function drawSign(id, x, y)
+  {
+    c.font = "32px serif";
+    switch (id)
+    {
+      case 0:
+	c.strokeText("O", 40 * x + 18, 40 * (y + 1) + 2);
+	break
+      case 1:
+	c.strokeText("X", 40 * x + 18, 40 * (y + 1) + 2);
+	break
+      default:
+	if (id < 10)
+	  c.strokeText(id, 40 * x + 22, 40 * (y + 1) + 2);
+	if (id > 10)
+	  c.strokeText(id, 40 * x + 14, 40 * (y + 1) + 2);
+	break
+    }
+  }
+  
+  function clean()
+  {
+    c.clearRect(0, 0, canvas.width, canvas.height);
+    drawBox();
+  }
+  
+  function getTurn()
+  {
+    flag = true;
+  }
+  
+  function tellWin(id)
+  {
+    if (id == myId)
+      alert("You win!");
+    else
+    {
+      switch (id)
+      {
+	case 0:
+	  alert("You loose! O win!");
+	  break
+	case 1:
+	  alert("You loose! X win!");
+	  break
+	default:
+	  alert("You loose! " + id + " win!");
+	  break
+      }
+    }
+  }
+  
+  function setMyId(id)
+  {
+    myId = id;
+  }
+  
+  function handleClick(e)
+  {
+    if (flag == false)
+    {
+      //do nothing
+    }
+    if (flag == true)
+    {
+      x = Math.floor((e.offsetX - 10)/40);
+      y = Math.floor((e.offsetY - 10)/40);
+      //send to server     
+      flag = false;
+    }
   }
 
 drawBox();
@@ -52,7 +121,28 @@ ws.onmessage = function(evt)
   var id = dv.getInt32(4);
   var x = dv.getInt32(8);
   var y = dv.getInt32(12);
-  alert(id);
+  switch (id)
+  {
+    //getting turn
+    case 1:
+      drawSign(id, x, y);
+      break
+    //clean field
+    case 2:
+      clean();
+      break
+    //make turn and send result
+    case 3:
+      getTurn(id);
+      break
+    case 4:
+      tellWin(id);
+      break
+    case 5:
+      setMyId(id);
+    default:
+      break
+  }
 };
 
 </script>
