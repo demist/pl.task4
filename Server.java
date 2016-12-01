@@ -189,6 +189,9 @@ public class Server
 				  Player newOne = new Player(wsClientSocket);
 				  //synchronize here
 				  players.add(newOne);
+				  byte[] msg = new byte[]{ (byte)0x81, (byte)0x05, (byte)0x48, (byte)0x65, (byte)0x6c, (byte)0x6c, (byte)0x6f};
+				  os.write(msg);
+				  os.flush();
 				}
 				catch (Exception e)
 				{
