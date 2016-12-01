@@ -255,10 +255,56 @@ public class Server
 	    }
 	    public void sendCleanField()
 	    {
-	    
+	      byte[] typeBytes = ByteBuffer.allocate(4).putInt(2).array();
+	      byte[] idBytes = ByteBuffer.allocate(4).putInt(0).array();
+	      byte[] xBytes = ByteBuffer.allocate(4).putInt(0).array();
+	      byte[] yBytes = ByteBuffer.allocate(4).putInt(0).array();
+	      byte[] msg = new byte[18];
+	      msg[0] = (byte) 0x82;
+	      msg[1] = (byte) 0x10;
+	      for (int i = 0; i < 4; i++)
+	      {
+		msg[2 + i] = typeBytes[i];
+		msg[6 + i] = idBytes[i];
+		msg[10 + i] = xBytes[i];
+		msg[14 + i] = yBytes[i];
+	      }
+	      try
+	      {
+		os.write(msg);
+		os.flush();
+	      }
+	      catch (IOException e)
+	      {
+		System.out.println(e);
+	      }
 	    }
 	    public Point getTurn(int id)
 	    {
+	      byte[] typeBytes = ByteBuffer.allocate(4).putInt(3).array();
+	      byte[] idBytes = ByteBuffer.allocate(4).putInt(id).array();
+	      byte[] xBytes = ByteBuffer.allocate(4).putInt(0).array();
+	      byte[] yBytes = ByteBuffer.allocate(4).putInt(0).array();
+	      byte[] msg = new byte[18];
+	      msg[0] = (byte) 0x82;
+	      msg[1] = (byte) 0x10;
+	      for (int i = 0; i < 4; i++)
+	      {
+		msg[2 + i] = typeBytes[i];
+		msg[6 + i] = idBytes[i];
+		msg[10 + i] = xBytes[i];
+		msg[14 + i] = yBytes[i];
+	      }
+	      try
+	      {
+		os.write(msg);
+		os.flush();
+		//wait here for client's response
+	      }
+	      catch (IOException e)
+	      {
+		System.out.println(e);
+	      }
 	      return new Point(0, 0);
 	    }	    
 	}
