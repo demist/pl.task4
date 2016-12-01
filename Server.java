@@ -1,5 +1,7 @@
 import java.io.DataInputStream;
 import java.io.PrintStream;
+import java.io.InputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.ServerSocket;
@@ -156,6 +158,7 @@ public class Server
 		ArrayList<Player> players;
 		private BufferedReader in = null;
 		private PrintStream os = null;
+		private InputStream inp = null;
 		
 		public WebSocketThread(Socket clientSocket, ArrayList<Player> players)
 		{
@@ -189,7 +192,9 @@ public class Server
 					"Sec-WebSocket-Accept: " + result + "\r\n\r\n";
 				  os.write(response.getBytes());
 				  os.flush();
-				  Player newOne = new Player(wsClientSocket, in, os);
+				  inp = wsClientSocket.getInputStream();
+				  Player newOne = new Player(wsClientSocket, inp, os);
+				  Point g = newOne.getTurn(1);
 				  //synchronize here
 				  players.add(newOne);
 				}
@@ -218,13 +223,15 @@ public class Server
 	//player class used to represent and interact with clients
 	private static class Player
 	{
-	    private BufferedReader in = null;
+	    private InputStream inp = null;
+	    private DataInputStream dinp = null;
 	    private PrintStream os = null;
 	    private Socket wsSocket = null;
-	    public Player(Socket wsSocket, BufferedReader in, PrintStream os)
+	    public Player(Socket wsSocket, InputStream inp, PrintStream os)
 	    {
 	      this.wsSocket = wsSocket;
-	      this.in = in;
+	      this.inp = inp;
+	      this.dinp = new DataInputStream(this.inp);
 	      this.os = os;
 	    }
 	    public void sendTurn(int id, Point p)
@@ -279,6 +286,7 @@ public class Server
 		System.out.println(e);
 	      }
 	    }
+	    	    
 	    public Point getTurn(int id)
 	    {
 	      byte[] typeBytes = ByteBuffer.allocate(4).putInt(3).array();
@@ -300,6 +308,40 @@ public class Server
 		os.write(msg);
 		os.flush();
 		//wait here for client's response
+		int a = 0;
+		boolean flag = true;
+		while (flag)
+		{
+		  a = inp.available();
+		  if (a > 13) // two integers are already in stream
+		     flag = false;
+		}
+		//reading
+		byte[] xTBytes = new byte[7];
+		byte[] yTBytes = new byte[7];
+		if (dinp.read(xTBytes, 0, 7) != 7)
+		  System.out.println("error reading websocket!");
+		if (dinp.read(yTBytes, 0, 7) != 7)
+		  System.out.println("error reading websocket!");
+		//not good - better to check length of frame, but we know it is 1
+		byte[] mask1 = new byte[4];
+		byte[] mask2 = new byte[4];
+		byte[] xV = new byte[4];
+		byte[] yV = new byte[4];
+		for (int i = 0; i < 3; i++)
+		{
+		  xV[i] = 0x00;
+		  yV[i] = 0x00;
+		}
+		xV[3] = xTBytes[6];
+		yV[3] = yTBytes[6];
+		ByteBuffer w1 = ByteBuffer.wrap(xV);
+		int x = w1.getInt();
+		ByteBuffer w2 = ByteBuffer.wrap(yV);
+		int y = w2.getInt();
+		System.out.println(x);
+		System.out.println(y);
+		
 	      }
 	      catch (IOException e)
 	      {
