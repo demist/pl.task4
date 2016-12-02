@@ -189,9 +189,37 @@ public class Server
 
     	private void nextTurn(int id, Point p)
     	{
-      		ArrayList<Integer> tmp = game.get(p.x); //always square
-      		tmp.set(p.y, id);
-      		//here we can add some code to expanse game field 
+		//field always square
+		//x < 0 or y < 0 means cells on left (on top) of current field
+		//agreement is that x can be only -1 or size(), y -1 or size()
+		//player wants to enlarge field only for one cell(one turn - one cell)
+		//optimization - we enlarge game field for 5 cells on every side
+		if (p.x == -1 || p.x == game.size() || p.y == -1 || p.y == game.size())
+		{
+		  ArrayList<ArrayList<Integer>> ngame = new ArrayList<ArrayList<Integer>>();
+		  for (int i = 0; i < game.size() + 10; i++)
+			{
+				ArrayList<Integer> inner = new ArrayList<Integer>(game.size() + 10);
+				for (int k = 0; k < game.size() + 10; k++)
+					inner.add(-1);
+				ngame.add(inner);
+			}
+		  //retrieve already done turns
+		  for (int i = 0; i < game.size(); i++)
+		  {
+		    for (int k = 0; k < game.size(); k++)
+		    {
+		      ngame.get(i + 5).set(k + 5, game.get(i).get(k)); 
+		    }
+		  }
+		  //do turn
+		  ngame.get(p.x + 5).set(p.y + 5, id); 
+		}
+		else
+		{
+		  ArrayList<Integer> tmp = game.get(p.x); //always square
+		  tmp.set(p.y, id);
+      		}
     	}
 
 		public void run()

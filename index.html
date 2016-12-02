@@ -79,13 +79,13 @@
       switch (id)
       {
 	case 0:
-	  alert("You loose! O win!");
-	  break
-	case 1:
 	  alert("You loose! X win!");
 	  break
+	case 1:
+	  alert("You loose! O win!");
+	  break
 	default:
-	  alert("You loose! " + id + " win!");
+	  alert("You loose! " + (id - 1) + " win!");
 	  break
       }
     }
@@ -100,7 +100,7 @@
   {
     if (flag == false)
     {
-      //do nothing
+      alert("it's not your turn!");
     }
     if (flag == true)
     {
