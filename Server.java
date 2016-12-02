@@ -220,6 +220,7 @@ public class Server
 	    this.y = y;
 	  }
 	}
+	
 	//player class used to represent and interact with clients
 	private static class Player
 	{
@@ -324,21 +325,32 @@ public class Server
 		if (dinp.read(yTBytes, 0, 7) != 7)
 		  System.out.println("error reading websocket!");
 		//not good - better to check length of frame, but we know it is 1
-		byte[] mask1 = new byte[4];
-		byte[] mask2 = new byte[4];
+		byte[] mask1V = new byte[4];
+		byte[] mask2V = new byte[4];
 		byte[] xV = new byte[4];
 		byte[] yV = new byte[4];
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < 4; i++)
 		{
+		  mask1V[i] = 0x00;
+		  mask2V[i] = 0x00;
 		  xV[i] = 0x00;
 		  yV[i] = 0x00;
 		}
+		mask1V[3] = xTBytes[2];
+		mask2V[3] = yTBytes[2];
 		xV[3] = xTBytes[6];
 		yV[3] = yTBytes[6];
+		ByteBuffer m1 = ByteBuffer.wrap(mask1V);
+		int mask1 = m1.getInt();
+		ByteBuffer m2 = ByteBuffer.wrap(mask2V);
+		int mask2 = m2.getInt();
 		ByteBuffer w1 = ByteBuffer.wrap(xV);
-		int x = w1.getInt();
+		int x = w1.getInt() ^ mask1;
 		ByteBuffer w2 = ByteBuffer.wrap(yV);
-		int y = w2.getInt();
+		int y = w2.getInt() ^ mask2;
+		x -= 48;
+		y -= 48;
+		
 		System.out.println(x);
 		System.out.println(y);
 		

@@ -18,7 +18,7 @@
   var playerX = 0; 
   var playerY = 0;
   var flag = false;
-  var myId = -1;
+  var myId = 1;
   ws = new WebSocket("ws://localhost:7778");
   ws.binaryType = 'arraybuffer';
   
@@ -106,6 +106,7 @@
     {
       x = Math.floor((e.offsetX - 10)/40);
       y = Math.floor((e.offsetY - 10)/40);
+      drawSign(myId, x, y);
       ws.send(x);
       ws.send(y);
       flag = false;
