@@ -36,7 +36,8 @@ public class Server
 	{
 		players = new ArrayList<Player>();
 		//starting game here
-
+		GameThread game = new GameThread(players);
+		game.start();
 		//starting websocket server here
 		WebSocketServer wss = new WebSocketServer(players);
 		wss.start();
@@ -102,14 +103,15 @@ public class Server
 	//game class
 	private static class GameThread extends Thread
 	{
-		public GameThread()
+	    private ArrayList<Player> players;
+		public GameThread(ArrayList<Player> players)
 		{
-
+		  this.players = players;
 		}
 
 		public void run()
 		{
-
+		
 		}
 	}
 
@@ -194,7 +196,6 @@ public class Server
 				  os.flush();
 				  inp = wsClientSocket.getInputStream();
 				  Player newOne = new Player(wsClientSocket, inp, os);
-				  Point g = newOne.getTurn(1);
 				  //synchronize here
 				  players.add(newOne);
 				}
@@ -221,23 +222,11 @@ public class Server
 	  }
 	}
 	
-	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
-public static String bytesToHex(byte[] bytes) {
-    char[] hexChars = new char[bytes.length * 2];
-    for ( int j = 0; j < bytes.length; j++ ) {
-        int v = bytes[j] & 0xFF;
-        hexChars[j * 2] = hexArray[v >>> 4];
-        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-    }
-    return new String(hexChars);
-}
-
 	public static byte xor(byte a, byte b)
 	{
 	  return (byte)((int)a ^ (int)b);
 	}
-	
-	
+		
 	//player class used to represent and interact with clients
 	private static class Player
 	{
