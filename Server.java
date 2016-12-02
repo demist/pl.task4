@@ -105,7 +105,7 @@ public class Server
 	{
 	    private ArrayList<Player> players;
 	    private int lastInGame = -1;
-	    private ArrayList<ArrayList<Integer>> game;
+	    private ArrayList<ArrayList<Integer>> game = null;
 		public GameThread(ArrayList<Player> players)
 		{
 		  this.players = players;
@@ -113,34 +113,34 @@ public class Server
 
 		private void newGame()
 		{
-			game = new ArrayList<ArrayList<Integer>>(20); // 20 - start size
+			game = new ArrayList<ArrayList<Integer>>(); // 20 - start size
 			//preparing game field
-			for (int i = 0; i < game.size(); i++)
+			for (int i = 0; i < 20; i++)
 			{
 				ArrayList<Integer> inner = new ArrayList<Integer>(game.size());
-				for (int k = 0; k < inner.size(); k++)
-					inner.set(k, -1);
-				game.set(i, inner);
+				for (int k = 0; k < 20; k++)
+					inner.add(-1);
+				game.add(inner);
 			}
 		}
 
-		private boolean checkFive(int a, int b, int c, int d, int e)
+		private int checkFive(int a, int b, int c, int d, int e)
     	{
       		if (a == -1)
-        		return false;
+        		return -1;
       		if (a != b)
-        		return false;
+        		return -1;
       		if (a != c)
-        		return false;
+        		return -1;
       		if (a != d)
-        		return false;
+        		return -1;
       		if (a != e)
-        		return false;
-      		return true;
+        		return -1;
+      		return a;
     	}
 
 		//very simple, we can make lazy check with knowledge of the last turn
-    	private boolean checkWin()
+    	private int checkWin()
     	{
       		//horizontal case _
       		for (int i = 0; i < game.size(); i++)
@@ -148,8 +148,9 @@ public class Server
         		ArrayList<Integer> cur = game.get(i);
         		for (int j = 0; j < cur.size() - 4; j++)
         		{
-          			if (checkFive(cur.get(j), cur.get(j + 1), cur.get(j + 2), cur.get(j + 3), cur.get(j + 4)))
-            			return true;
+          			int a = checkFive(cur.get(j), cur.get(j + 1), cur.get(j + 2), cur.get(j + 3), cur.get(j + 4));
+          			if (a != -1)
+            			return a;
         		}
       		}
       		//vertical case |
@@ -157,8 +158,9 @@ public class Server
       		{
         		for (int j = 0; j < game.size(); j++)
         		{
-          			if (checkFive(game.get(i).get(j), game.get(i + 1).get(j), game.get(i + 2).get(j), game.get(i + 3).get(j), game.get(i + 4).get(j)))
-            			return true;
+          			int a = checkFive(game.get(i).get(j), game.get(i + 1).get(j), game.get(i + 2).get(j), game.get(i + 3).get(j), game.get(i + 4).get(j));
+          			if (a != -1)
+            			return a;
         		}
       		}
       		//diagonal case 1 /
@@ -166,8 +168,9 @@ public class Server
       		{
         		for (int j = 0; j < game.size() - 4; j++)
         		{
-          			if (checkFive(game.get(i + 4).get(j), game.get(i + 3).get(j + 1), game.get(i + 2).get(j + 2), game.get(i + 1).get(j + 3), game.get(i).get(j + 4)))
-            			return true;
+          			int a = checkFive(game.get(i + 4).get(j), game.get(i + 3).get(j + 1), game.get(i + 2).get(j + 2), game.get(i + 1).get(j + 3), game.get(i).get(j + 4));
+          			if (a != -1)
+            			return a;
         		}
       		}
       		//diagonal case 2 \
@@ -175,34 +178,97 @@ public class Server
       		{
         		for (int j = 0; j < game.size() - 4; j++)
         		{
-          			if (checkFive(game.get(i).get(j), game.get(i + 1).get(j + 1), game.get(i + 2).get(j + 2), game.get(i + 3).get(j + 3), game.get(i + 4).get(j + 4)))
-            			return true;
+          			int a = checkFive(game.get(i).get(j), game.get(i + 1).get(j + 1), game.get(i + 2).get(j + 2), game.get(i + 3).get(j + 3), game.get(i + 4).get(j + 4));
+          			if (a != -1)
+            			return a;
         		}
       		}
       		//default
-      		return false;
+      		return -1;
     	}
 
-    	private void nextTurn(int id, int i, int j)
+    	private void nextTurn(int id, Point p)
     	{
-      		ArrayList<Integer> tmp = game.get(i);
-      		tmp.set(j, id);
+      		ArrayList<Integer> tmp = game.get(p.x); //always square
+      		tmp.set(p.y, id);
       		//here we can add some code to expanse game field 
     	}
 
 		public void run()
 		{
 			//waiting for 2 players min to start the game
-			if (players.size() < 2)
+			int size = 0;
+			while (size < 2)
 			{
 				try
 				{
 					Thread.sleep(1000);
+					synchronized(players)
+					{
+					  size = players.size();
+					}
 				}
 				catch (Exception e)
 				{
 					System.out.println(e);
 				}
+			}
+			//start game process
+			newGame();
+			int cur = 0;
+			Point newTurn;
+			Player curPl;
+			int win;
+			while (true)
+			{
+			    synchronized(players)
+			    {
+			      curPl = players.get(cur);
+			    }
+			  //adding new players and sending them current game info
+			  //new players get game status at their turn
+			  
+			  if (cur > lastInGame)
+			  {
+			    lastInGame = cur;
+			    curPl.setPlayerId(cur);
+			    for (int i = 0; i < game.size(); i++)
+			    {
+			      for (int k = 0; k < game.size(); k++)
+				if (game.get(i).get(k) != -1)
+				    curPl.sendTurn(game.get(i).get(k), new Point(i, k));
+			    }
+			  }
+			  //getting turn
+			  newTurn = curPl.getTurn();
+			  nextTurn(cur, newTurn);
+			  synchronized(players)
+			  {
+			    for (int i = 0; i < players.size(); i++)
+				players.get(i).sendTurn(cur, newTurn);
+			  }
+			  win = checkWin();
+			  if (win != -1)
+			  {
+			    synchronized(players)
+			    {
+			      for (int i = 0; i < players.size(); i++)
+			      {
+				players.get(i).tellWin(win);
+				players.get(i).sendCleanField();
+			      }
+			    }
+			    newGame();
+			    cur = -1;
+			  }
+			  synchronized(players)
+			  {
+			    size = players.size();
+			  }
+			  if (cur == size - 1)
+			    cur = 0;
+			  else
+			    cur++;
 			}
 		}
 	}
@@ -288,8 +354,10 @@ public class Server
 				  os.flush();
 				  inp = wsClientSocket.getInputStream();
 				  Player newOne = new Player(wsClientSocket, inp, os);
-				  //synchronize here
-				  players.add(newOne);
+				  synchronized(players)
+				  {
+				    players.add(newOne);
+				  }
 				}
 				catch (Exception e)
 				{
@@ -386,10 +454,10 @@ public class Server
 	      }
 	    }
 	    	    
-	    public Point getTurn(int id)
+	    public Point getTurn()
 	    {
 	      byte[] typeBytes = ByteBuffer.allocate(4).putInt(3).array();
-	      byte[] idBytes = ByteBuffer.allocate(4).putInt(id).array();
+	      byte[] idBytes = ByteBuffer.allocate(4).putInt(0).array();
 	      byte[] xBytes = ByteBuffer.allocate(4).putInt(0).array();
 	      byte[] yBytes = ByteBuffer.allocate(4).putInt(0).array();
 	      byte[] msg = new byte[18];
@@ -437,8 +505,6 @@ public class Server
 		String[] parts = res.split(":");
 		int x = Integer.parseInt(parts[0]);
 		int y = Integer.parseInt(parts[1]);
-		System.out.println(x);
-		System.out.println(y);
 		return new Point(x, y);
 		
 	      }
