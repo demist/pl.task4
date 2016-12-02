@@ -107,8 +107,7 @@
       x = Math.floor((e.offsetX - 10)/40);
       y = Math.floor((e.offsetY - 10)/40);
       drawSign(myId, x, y);
-      ws.send(x);
-      ws.send(y);
+      ws.send(x + ":" + y);
       flag = false;
     }
   }

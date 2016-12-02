@@ -221,6 +221,23 @@ public class Server
 	  }
 	}
 	
+	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+public static String bytesToHex(byte[] bytes) {
+    char[] hexChars = new char[bytes.length * 2];
+    for ( int j = 0; j < bytes.length; j++ ) {
+        int v = bytes[j] & 0xFF;
+        hexChars[j * 2] = hexArray[v >>> 4];
+        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+    }
+    return new String(hexChars);
+}
+
+	public static byte xor(byte a, byte b)
+	{
+	  return (byte)((int)a ^ (int)b);
+	}
+	
+	
 	//player class used to represent and interact with clients
 	private static class Player
 	{
@@ -314,45 +331,34 @@ public class Server
 		while (flag)
 		{
 		  a = inp.available();
-		  if (a > 13) // two integers are already in stream
+		  if (a > 0) // two integers are already in stream
 		     flag = false;
 		}
 		//reading
-		byte[] xTBytes = new byte[7];
-		byte[] yTBytes = new byte[7];
-		if (dinp.read(xTBytes, 0, 7) != 7)
+		byte[] TBytes = new byte[a];
+		if (dinp.read(TBytes, 0, a) != a)
 		  System.out.println("error reading websocket!");
-		if (dinp.read(yTBytes, 0, 7) != 7)
-		  System.out.println("error reading websocket!");
-		//not good - better to check length of frame, but we know it is 1
-		byte[] mask1V = new byte[4];
-		byte[] mask2V = new byte[4];
-		byte[] xV = new byte[4];
-		byte[] yV = new byte[4];
+		byte[] lenB = new byte[4];
+		lenB[3] = TBytes[1];
+		ByteBuffer b1 = ByteBuffer.wrap(lenB);
+		int len = (b1.getInt()) - 128; //we know it is masked, so we minus 128
+		//we know len is 7 bits, because we won't send messages longer than 126 bytes
+		byte[] mask = new byte[4];
 		for (int i = 0; i < 4; i++)
-		{
-		  mask1V[i] = 0x00;
-		  mask2V[i] = 0x00;
-		  xV[i] = 0x00;
-		  yV[i] = 0x00;
-		}
-		mask1V[3] = xTBytes[2];
-		mask2V[3] = yTBytes[2];
-		xV[3] = xTBytes[6];
-		yV[3] = yTBytes[6];
-		ByteBuffer m1 = ByteBuffer.wrap(mask1V);
-		int mask1 = m1.getInt();
-		ByteBuffer m2 = ByteBuffer.wrap(mask2V);
-		int mask2 = m2.getInt();
-		ByteBuffer w1 = ByteBuffer.wrap(xV);
-		int x = w1.getInt() ^ mask1;
-		ByteBuffer w2 = ByteBuffer.wrap(yV);
-		int y = w2.getInt() ^ mask2;
-		x -= 48;
-		y -= 48;
-		
+		  mask[i] = TBytes[2 + i];
+		byte[] str = new byte[len];
+		for (int i = 0; i < len; i++)
+		  str[i] = TBytes[6 + i];
+		byte[] resstr = new byte[len];
+		for (int i = 0; i < len; i++)
+		  resstr[i] = xor(str[i], mask[i % 4]);
+		String res = new String(resstr);
+		String[] parts = res.split(":");
+		int x = Integer.parseInt(parts[0]);
+		int y = Integer.parseInt(parts[1]);
 		System.out.println(x);
 		System.out.println(y);
+		return new Point(x, y);
 		
 	      }
 	      catch (IOException e)
